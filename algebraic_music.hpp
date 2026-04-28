@@ -58,6 +58,22 @@ static constexpr int floorDiv(int a, int b) {
 
 } // namespace detail
 
+namespace pc
+{
+    inline int mod12(int x) {
+        int r = x % 12;
+        return (r < 0) ? r + 12 : r;
+    }
+
+    // Fifth-order <-> chromatic order conversion
+	// Converts between fifth-based pitch class ordering and standard chromatic ordering.
+	// The mapping is self-inverse because 7 is its own inverse modulo 12:
+	// 7 * 7 ≡ 1 (mod 12).
+    inline int reorder(int x) {
+        return mod12(7 * x);
+    }
+}
+
 class Interval;
 class Note;
 
