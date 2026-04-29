@@ -34,6 +34,9 @@ static constexpr int Fifth   = 1;
 static constexpr int Octave  = 84;
 static constexpr int Octaves = 48;
 static constexpr int Period  = Octave * Octaves; // 4032
+static constexpr int ChromaticSemitoneUp = 7 * Fifth - 4 * Octave; // -329
+static constexpr int DiatonicSemitoneUp  = -5 * Fifth + 3 * Octave; // 247
+static constexpr int WholeToneUp         = 2 * Fifth - Octave;      // -82
 
 static constexpr int positiveMod(int a, int m) {
     return ((a % m) + m) % m;
@@ -161,6 +164,18 @@ public:
         return "?";
     }
 
+    static constexpr int valueFromSpelling(
+        Letter letter,
+        int accidental,
+        int octave)
+    {
+        return detail::normalize(
+            naturalValueAtOctave0(letter)
+            + accidental * detail::ChromaticSemitoneUp
+            + octave * detail::Octave
+        );
+    }
+
 private:
     static constexpr int naturalPitchClass(Letter l) {
         switch (l) {
@@ -180,6 +195,19 @@ private:
         // Change this if you prefer +6 over -6 at the enharmonic boundary.
         return detail::positiveMod(x + 6, 12) - 6;
     }
+
+    static constexpr int naturalValueAtOctave0(Letter l) {
+        switch (l) {
+            case Letter::C: return 0;
+            case Letter::D: return detail::WholeToneUp;
+            case Letter::E: return 2 * detail::WholeToneUp;
+            case Letter::F: return -detail::Fifth + detail::Octave;
+            case Letter::G: return detail::Fifth;
+            case Letter::A: return 3 * detail::Fifth - detail::Octave;
+            case Letter::B: return 5 * detail::Fifth - 2 * detail::Octave;
+        }
+        return 0;
+    }
 };
 
 class Interval {
@@ -189,9 +217,9 @@ public:
     static constexpr int Octaves    = detail::Octaves;
     static constexpr int Period     = detail::Period;
 
-    static constexpr int ChromaticSemitoneUp = -329;
-    static constexpr int DiatonicSemitoneUp  = 247;
-    static constexpr int WholeToneUp         = -82;
+    static constexpr int ChromaticSemitoneUp = detail::ChromaticSemitoneUp;
+    static constexpr int DiatonicSemitoneUp  = detail::DiatonicSemitoneUp;
+    static constexpr int WholeToneUp         = detail::WholeToneUp;
 
     constexpr Interval() : value_(0) {}
     explicit constexpr Interval(int v) : value_(detail::normalize(v)) {}
@@ -266,6 +294,14 @@ public:
 
     static constexpr Note raw(int v) {
         return Note(v);
+    }
+
+    static constexpr Note fromSpelling(
+        PitchSpelling::Letter letter,
+        int accidental,
+        int octave)
+    {
+        return Note(PitchSpelling::valueFromSpelling(letter, accidental, octave));
     }
 
     constexpr int value() const {
